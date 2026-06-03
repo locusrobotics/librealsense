@@ -291,6 +291,12 @@ namespace librealsense
             return r;
         }
 
+        static double timeval_to_ms( timeval const & tv )
+        {
+            return static_cast<double>( tv.tv_sec  ) * 1000.0
+                 + static_cast<double>( tv.tv_usec ) / 1000.0;
+        }
+
         buffer::buffer(int fd, v4l2_buf_type type, bool use_memory_map, uint32_t index)
             : _type(type), _use_memory_map(use_memory_map), _index(index)
         {
@@ -1755,7 +1761,7 @@ namespace librealsense
                                     {
                                         if(has_metadata())
                                         {
-                                            auto timestamp = (double)buf.timestamp.tv_sec*1000.f + (double)buf.timestamp.tv_usec/1000.f;
+                                            auto timestamp = timeval_to_ms(buf.timestamp);
                                             timestamp = monotonic_to_realtime(timestamp);
 
                                             // Read metadata. Metadata node performs a blocking call to ensure video and metadata sync
@@ -1790,7 +1796,7 @@ namespace librealsense
                                         }
                                         else // when metadata is not enabled at all, streaming only video
                                         {
-                                            auto timestamp = (double)buf.timestamp.tv_sec * 1000.f + (double)buf.timestamp.tv_usec / 1000.f;
+                                            auto timestamp = timeval_to_ms(buf.timestamp);
                                             timestamp = monotonic_to_realtime(timestamp);
 
                                             LOG_DEBUG_V4L("no metadata streamed");
@@ -1915,7 +1921,7 @@ namespace librealsense
                                         std::min(video_v4l2_buffer->bytesused - buf_mgr.metadata_size(),
                                                  video_buffer->get_length_frame_only());
 
-                    auto timestamp = (double)video_v4l2_buffer->timestamp.tv_sec * 1000.f + (double)video_v4l2_buffer->timestamp.tv_usec / 1000.f;
+                    auto timestamp = timeval_to_ms(video_v4l2_buffer->timestamp);
                     timestamp = monotonic_to_realtime(timestamp);
 
                     // D457 work - to work with "normal camera", use frame_sz as the first input to the following frame_object:
