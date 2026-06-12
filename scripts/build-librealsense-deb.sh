@@ -204,8 +204,19 @@ add_path() {
   cp -a "$src_path" "$pkg_root/$rel_path"
 }
 
-add_path "$dev_root" "usr/include"
-add_path "$dev_root" "usr/lib/pkgconfig"
+for include_dir in "$stage_dir"/usr/include "$stage_dir"/usr/local/include; do
+  if [[ -d "$include_dir" ]]; then
+    rel="${include_dir#$stage_dir/}"
+    add_path "$dev_root" "$rel"
+  fi
+done
+
+for pkgconfig_dir in "$stage_dir"/usr/lib*/pkgconfig "$stage_dir"/usr/local/lib*/pkgconfig; do
+  if [[ -d "$pkgconfig_dir" ]]; then
+    rel="${pkgconfig_dir#$stage_dir/}"
+    add_path "$dev_root" "$rel"
+  fi
+done
 
 for cmake_dir in "$stage_dir"/usr/lib*/cmake; do
   if [[ -d "$cmake_dir" ]]; then
@@ -330,6 +341,14 @@ build_deb \
   "$runtime_root" \
   "librealsense2-udev-rules, libc6, libgcc-s1, libssl3, libstdc++6, libudev1, libusb-1.0-0, libx11-6" \
   "RealSense SDK runtime shared libraries."
+
+if ! has_payload "$dev_root"; then
+  echo "Diagnostics: librealsense2-dev payload is empty" >&2
+  echo "Diagnostics: looking for installed headers under stage" >&2
+  find "$stage_dir" -maxdepth 5 -type d -name include -o -name librealsense2 2>/dev/null | sed 's#^#  #g' >&2 || true
+  echo "Diagnostics: installed pkgconfig files" >&2
+  find "$stage_dir" -maxdepth 6 -type f -name '*.pc' 2>/dev/null | sed 's#^#  #g' >&2 || true
+fi
 
 build_deb \
   "librealsense2-dev" \
