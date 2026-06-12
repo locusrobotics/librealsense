@@ -48,13 +48,12 @@ jobs:
       - name: Check out requested ref
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_ref }}
           fetch-depth: 0
 
       - name: Build Debian package
         shell: bash
         run: |
-          ./scripts/build-librealsense-deb.sh --skip-deps --output-dir dist
+          ./scripts/build-librealsense-deb.sh --skip-deps --ref "${{ inputs.source_ref }}" --output-dir dist
 
       - name: Collect packages
         shell: bash
