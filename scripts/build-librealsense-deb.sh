@@ -68,6 +68,9 @@ run_as_root() {
   fi
 }
 
+checkout_dir=$(pwd -P)
+git config --global --add safe.directory "$checkout_dir"
+
 repo_root=$(git rev-parse --show-toplevel)
 source_dir="$repo_root"
 worktree_root=""
