@@ -273,7 +273,8 @@ extract_debug_symbols() {
   local dst_root="$2"
 
   while IFS= read -r -d '' binary_path; do
-    if ! file "$binary_path" | grep -q "ELF"; then
+    # Prefer readelf over file(1) so --with-debug works in minimal CI images.
+    if ! readelf -h "$binary_path" >/dev/null 2>&1; then
       continue
     fi
 
@@ -289,8 +290,8 @@ extract_debug_symbols() {
 }
 
 if [[ $with_debug -eq 1 ]]; then
-  if ! command -v objcopy >/dev/null 2>&1 || ! command -v strip >/dev/null 2>&1; then
-    echo "objcopy/strip are required for --with-debug" >&2
+  if ! command -v objcopy >/dev/null 2>&1 || ! command -v strip >/dev/null 2>&1 || ! command -v readelf >/dev/null 2>&1; then
+    echo "objcopy/strip/readelf are required for --with-debug" >&2
     exit 1
   fi
 
@@ -350,11 +351,29 @@ build_deb \
   "RealSense SDK runtime shared libraries."
 
 if ! has_payload "$dev_root"; then
+  # Fallback: copy development payload directly from staged install roots.
+  add_path "$dev_root" "usr/include"
+  add_path "$dev_root" "usr/local/include"
+
+  while IFS= read -r -d '' pc_file; do
+    rel="${pc_file#$stage_dir/}"
+    add_path "$dev_root" "$rel"
+  done < <(find "$stage_dir" -type f -path '*/pkgconfig/*.pc' -print0 2>/dev/null)
+
+  while IFS= read -r -d '' cmake_entry; do
+    rel="${cmake_entry#$stage_dir/}"
+    add_path "$dev_root" "$rel"
+  done < <(find "$stage_dir" -path '*/cmake/realsense2*' -print0 2>/dev/null)
+fi
+
+if ! has_payload "$dev_root"; then
   echo "Diagnostics: librealsense2-dev payload is empty" >&2
   echo "Diagnostics: looking for installed headers under stage" >&2
   find "$stage_dir" -maxdepth 5 -type d -name include -o -name librealsense2 2>/dev/null | sed 's#^#  #g' >&2 || true
   echo "Diagnostics: installed pkgconfig files" >&2
   find "$stage_dir" -maxdepth 6 -type f -name '*.pc' 2>/dev/null | sed 's#^#  #g' >&2 || true
+  echo "Diagnostics: current dev package tree" >&2
+  find "$dev_root" -maxdepth 8 -mindepth 1 2>/dev/null | sed 's#^#  #g' >&2 || true
 fi
 
 build_deb \
