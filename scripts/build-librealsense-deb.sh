@@ -196,13 +196,19 @@ add_path() {
   local pkg_root="$1"
   local rel_path="$2"
   local src_path="$stage_dir/$rel_path"
+  local dst_path="$pkg_root/$rel_path"
 
   if [[ ! -e "$src_path" ]]; then
     return
   fi
 
-  mkdir -p "$pkg_root/$(dirname "$rel_path")"
-  cp -a "$src_path" "$pkg_root/$rel_path"
+  if [[ -d "$src_path" ]]; then
+    mkdir -p "$dst_path"
+    cp -a "$src_path/." "$dst_path/"
+  else
+    mkdir -p "$pkg_root/$(dirname "$rel_path")"
+    cp -a "$src_path" "$dst_path"
+  fi
 }
 
 for include_dir in "$stage_dir"/usr/include "$stage_dir"/usr/local/include; do
