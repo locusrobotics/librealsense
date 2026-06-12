@@ -53,7 +53,7 @@ jobs:
       - name: Build Debian package
         shell: bash
         run: |
-          ./scripts/build-librealsense-deb.sh --skip-deps --ref "${{ inputs.source_ref }}" --output-dir dist
+          ./scripts/build-librealsense-deb.sh --skip-deps --with-gl --with-debug --ref "${{ inputs.source_ref }}" --output-dir dist
 
       - name: Collect packages
         shell: bash
