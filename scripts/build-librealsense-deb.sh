@@ -147,6 +147,7 @@ rm -rf "$build_dir"
 cmake -S "$source_dir" -B "$build_dir" \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX=/usr \
+  -DCMAKE_INSTALL_LIBDIR=lib \
   -DBUILD_SHARED_LIBS=ON \
   -DBUILD_EXAMPLES=OFF \
   -DBUILD_GRAPHICAL_EXAMPLES=OFF \
