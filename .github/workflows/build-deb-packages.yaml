@@ -12,7 +12,57 @@ on:
 permissions: read-all
 
 jobs:
-  placeholder:
+  build_deb:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: jammy
+            container_image: ubuntu:jammy
+          - distro: noble
+            container_image: ubuntu:noble
+    container:
+      image: ${{ matrix.container_image }}
     steps:
-      - run: echo "Workflow registered. Real implementation pending."
+      - name: Install build dependencies
+        shell: bash
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            build-essential \
+            ca-certificates \
+            cmake \
+            fakeroot \
+            git \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libglfw3-dev \
+            libssl-dev \
+            libudev-dev \
+            libusb-1.0-0-dev \
+            libx11-dev \
+            pkg-config
+
+      - name: Check out requested ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref }}
+          fetch-depth: 0
+
+      - name: Build Debian package
+        shell: bash
+        run: |
+          ./scripts/build-librealsense-deb.sh --skip-deps --output-dir dist
+
+      - name: Collect packages
+        shell: bash
+        run: |
+          ls -l dist
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: librealsense2-${{ matrix.distro }}
+          path: dist/*.deb
