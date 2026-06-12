@@ -305,7 +305,12 @@ fi
 
 has_payload() {
   local pkg_root="$1"
-  find "$pkg_root" -mindepth 1 -not -path "$pkg_root/DEBIAN" -not -path "$pkg_root/DEBIAN/*" | grep -q .
+  local first_entry
+  first_entry=$(find "$pkg_root" -mindepth 1 \
+    -not -path "$pkg_root/DEBIAN" \
+    -not -path "$pkg_root/DEBIAN/*" \
+    -print -quit)
+  [[ -n "$first_entry" ]]
 }
 
 build_deb() {
