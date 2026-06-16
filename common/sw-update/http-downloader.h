@@ -6,6 +6,7 @@
 #include <string>
 #include <functional>
 #include <vector>
+#include <cstdint>
 
 namespace rs2
 {
